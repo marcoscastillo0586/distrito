@@ -1,0 +1,9 @@
+# Dependencias
+node_modules/
+
+# Netlify local environment & build cache
+.netlify/
+
+# OS and temporary files
+.DS_Store
+Thumbs.db

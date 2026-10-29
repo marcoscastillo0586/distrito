@@ -1,0 +1,21 @@
+{
+    "active_contract_id": "contract_default",
+    "contracts": {
+        "contract_default": {
+            "id": "contract_default",
+            "project_name": "FaceId",
+            "client_name": "FACEID",
+            "contract_total_usd": 3000,
+            "payments": [
+                {
+                    "id": "pay_1783193142268_x077p",
+                    "date": "2026-06-23",
+                    "amount_ars": 2000000,
+                    "exchange_rate": 1495,
+                    "amount_usd": 1337.79,
+                    "notes": "PRIMER PAGO"
+                }
+            ]
+        }
+    }
+}

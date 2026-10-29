@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pagos - Contratos de Servicios</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo-section">
+                <h1>CONTROL DE PAGOS</h1>
+                <p>Sistema de Control de Pagos Bimonetario (USD / ARS)</p>
+            </div>
+            <div class="header-actions">
+                <span class="mode-badge" id="persistence-mode-badge" style="font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.05); text-transform: uppercase;">Detectando modo...</span>
+                <span class="live-rate-badge" id="live-rate-badge" style="display: none;"></span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Sidebar layout: Forms and Contract Selection -->
+        <aside class="form-section">
+            
+            <!-- Contract Selector & Management Card -->
+            <div class="form-card">
+                <h2 style="font-size: 1.15rem; margin-bottom: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Seleccionar Contrato
+                </h2>
+                
+                <div class="form-group">
+                    <label for="contract-select">Contrato Activo</label>
+                    <select id="contract-select" style="font-weight: 600; border-color: var(--color-primary);">
+                        <!-- Options dynamically injected -->
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                    <button id="btn-toggle-new-contract" class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 600;">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nuevo Contrato
+                    </button>
+                    <button id="btn-delete-active-contract" class="btn btn-danger" style="padding: 0.5rem;" title="Eliminar Contrato Activo">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form: Create New Contract (Hidden by default) -->
+            <div id="new-contract-card" class="form-card" style="display: none; border-color: var(--color-primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                    <h2 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        Nuevo Contrato
+                    </h2>
+                    <button id="btn-close-new-contract" class="btn btn-secondary" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;">Cancelar</button>
+                </div>
+                
+                <form id="new-contract-form">
+                    <div class="form-group">
+                        <label for="new-project-name">Nombre del Proyecto</label>
+                        <input type="text" id="new-project-name" placeholder="Ej: Trabajo N o Sitio Web" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new-client-name">Cliente</label>
+                        <input type="text" id="new-client-name" placeholder="Ej: Juan Pérez o Empresa XYZ" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new-total-usd">Presupuesto Asignado (USD)</label>
+                        <input type="number" id="new-total-usd" placeholder="Ej: 4000" min="1" step="0.01" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Crear Contrato
+                    </button>
+                </form>
+            </div>
+
+            <!-- Payment Form Card -->
+            <div class="form-card">
+                <h2 style="font-size: 1.15rem; margin-bottom: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    Registrar Pago
+                </h2>
+                
+                <form id="payment-form">
+                    <div class="form-group">
+                        <label for="pay-date">Fecha de Recepción</label>
+                        <input type="date" id="pay-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pay-amount-ars">Monto Recibido (ARS)</label>
+                        <input type="number" id="pay-amount-ars" placeholder="Ej: 200000" min="0.01" step="0.01" required>
+                    </div>
+
+                    <div class="exchange-rate-box">
+                        <div class="api-status">
+                            <label style="margin-bottom: 0;">Tipo de Cambio (BNA)</label>
+                            <div class="status-indicator">
+                                <span class="indicator-dot" id="api-status-dot"></span>
+                                <span id="api-status-text" style="color: var(--text-muted);">Conectando API...</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <input type="checkbox" id="toggle-auto-rate" checked style="width: auto; cursor: pointer;">
+                            <label for="toggle-auto-rate" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Usar cotización de API</label>
+                            <button id="btn-refresh-rate" class="btn btn-secondary" style="margin-left: auto; padding: 0.25rem 0.5rem;" title="Actualizar cotización de API">
+                                <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <input type="number" id="pay-exchange-rate" placeholder="Cotización ARS/USD" min="0.01" step="0.01" readonly required>
+                    </div>
+
+                    <div class="form-group" style="margin-top: -0.5rem; margin-bottom: 1.25rem;">
+                        <span id="calculated-usd"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pay-notes">Concepto / Notas adicionales</label>
+                        <textarea id="pay-notes" rows="2" placeholder="Ej: Pago parcial, adelanto mensual..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Guardar Pago
+                    </button>
+                </form>
+            </div>
+
+            <!-- Configuration Card (Selected Contract detail update) -->
+            <div class="form-card">
+                <h2 style="font-size: 1.15rem; margin-bottom: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.5 1z"></path>
+                    </svg>
+                    Detalles Contrato
+                </h2>
+                
+                <form id="settings-form">
+                    <div class="form-group">
+                        <label for="config-project-name">Nombre del Proyecto</label>
+                        <input type="text" id="config-project-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="config-client-name">Cliente</label>
+                        <input type="text" id="config-client-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="config-total-usd">Presupuesto Activo (USD)</label>
+                        <input type="number" id="config-total-usd" min="1" step="0.01" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                        Actualizar Datos
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content layout: Metrics and History -->
+        <section class="history-section">
+            
+            <!-- Dashboard Summary Header -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: var(--shadow-md);">
+                <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">Contrato Seleccionado</div>
+                <h2 id="project-title-display" style="font-size: 1.65rem; font-weight: 800; letter-spacing: -0.5px;">Cargando...</h2>
+                <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span id="client-title-display">...</span>
+                </div>
+            </div>
+
+            <!-- Summary metrics -->
+            <div class="summary-container">
+                <div class="card card-total">
+                    <div class="card-title">Total contrato en USD</div>
+                    <div class="card-value usd" id="contract-total-display">$0.00</div>
+                    <div class="card-meta">
+                        <span>Presupuesto total fijado (USD)</span>
+                    </div>
+                </div>
+
+                <div class="card card-paid">
+                    <div class="card-title">Total percibido en pesos</div>
+                    <div class="card-value paid" id="total-paid-display">$0.00</div>
+                    <div class="card-meta">
+                        <span>Acumulado cobrado en ARS</span>
+                    </div>
+                </div>
+
+                <div class="card card-pending-usd">
+                    <div class="card-title">Saldo pendiente en dólares</div>
+                    <div class="card-value usd" id="remaining-balance-display">$0.00</div>
+                    <div class="card-meta">
+                        <span class="text-success text-semibold" id="progress-percentage">0%</span>
+                        <span>del total cobrado</span>
+                    </div>
+                </div>
+
+                <div class="card card-pending">
+                    <div class="card-title">Saldo pendiente en pesos</div>
+                    <div class="card-value pending" id="remaining-balance-ars-display">$0.00</div>
+                    <div class="card-meta">
+                        <span>A cotización: 1 USD = $ <span id="current-tc-display">0.00</span> ARS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress section -->
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>Progreso General</span>
+                    <span>USD percibido vs. fijado</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Payments Ledger -->
+            <div>
+                <div class="section-title" style="margin-bottom: 1rem;">
+                    <span>Historial de Pagos</span>
+                </div>
+
+                <!-- Payments list -->
+                <div class="table-card">
+                    
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state" style="display: none;">
+                        <svg class="icon" style="width: 3.5rem; height: 3.5rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <h3>No se registraron pagos aún</h3>
+                        <p>Los pagos agregados se mostrarán y deducirán del saldo en USD de este contrato.</p>
+                    </div>
+
+                    <!-- Payments Table -->
+                    <table class="table-responsive" id="payments-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">Fecha</th>
+                                <th style="width: 25%;">Monto ARS</th>
+                                <th style="width: 20%;">Cotización BNA</th>
+                                <th style="width: 20%;">Equiv. USD</th>
+                                <th style="width: 15%;">Notas</th>
+                                <th style="width: 5%; text-align: right;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payments-table-body">
+                            <!-- Injected by app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="margin-top: auto; padding: 2rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+        Valuation Ledger &copy; 2026. Diseñado para control de contratos de servicios con liquidación variable.
+    </footer>
+
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
