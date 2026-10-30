@@ -1,4 +1,4 @@
-const { getStore } = require("@netlify/blobs");
+const { getStore, connectLambda } = require("@netlify/blobs");
 
 /**
  * Netlify Function: eliminar-contrato
@@ -6,6 +6,13 @@ const { getStore } = require("@netlify/blobs");
  * Métodos permitidos: POST o DELETE
  */
 exports.handler = async (event, context) => {
+    if (event && event.blobs) {
+        try {
+            connectLambda(event);
+        } catch (lambdaErr) {
+            console.warn("No se pudo conectar Lambda context con Netlify Blobs:", lambdaErr);
+        }
+    }
     if (event.httpMethod !== 'POST' && event.httpMethod !== 'DELETE') {
         return {
             statusCode: 405,
@@ -44,7 +51,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const store = getStore("contratos");
+        const store = getStore("contratos", { context });
         await store.delete(contractId.trim());
 
         return {

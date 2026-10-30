@@ -1,4 +1,4 @@
-const { getStore } = require("@netlify/blobs");
+const { getStore, connectLambda } = require("@netlify/blobs");
 
 /**
  * Netlify Function: guardar-contrato
@@ -6,6 +6,13 @@ const { getStore } = require("@netlify/blobs");
  * Método permitido: Únicamente POST
  */
 exports.handler = async (event, context) => {
+    if (event && event.blobs) {
+        try {
+            connectLambda(event);
+        } catch (lambdaErr) {
+            console.warn("No se pudo conectar Lambda context con Netlify Blobs:", lambdaErr);
+        }
+    }
     // 1. Validar método HTTP: únicamente POST
     if (event.httpMethod !== 'POST') {
         return {
@@ -65,7 +72,7 @@ exports.handler = async (event, context) => {
         const sanitizedId = contractId.trim();
 
         // 3. Conexión al store de Netlify Blobs (namespace/store "contratos")
-        const store = getStore("contratos");
+        const store = getStore("contratos", { context });
 
         // 4. Preparar datos garantizando timestamp createdAt
         const now = new Date().toISOString();

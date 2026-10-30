@@ -1,4 +1,4 @@
-const { getStore } = require("@netlify/blobs");
+const { getStore, connectLambda } = require("@netlify/blobs");
 
 /**
  * Netlify Function: obtener-contratos
@@ -6,6 +6,13 @@ const { getStore } = require("@netlify/blobs");
  * Método permitido: GET
  */
 exports.handler = async (event, context) => {
+    if (event && event.blobs) {
+        try {
+            connectLambda(event);
+        } catch (lambdaErr) {
+            console.warn("No se pudo conectar Lambda context con Netlify Blobs:", lambdaErr);
+        }
+    }
     if (event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
@@ -21,7 +28,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const store = getStore("contratos");
+        const store = getStore("contratos", { context });
         const queryParams = event.queryStringParameters || {};
         const requestedId = queryParams.id;
 
